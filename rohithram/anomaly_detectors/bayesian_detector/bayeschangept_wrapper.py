@@ -46,9 +46,9 @@ algo_params_type ={
             'to_plot':bool
         }
 
-mode_options = ['DETECT','LOG','DETECT_LOG']
+mode_options = ['detect only','detect and log','"log only']
 
-def main(json_data,mode=mode_options[2],thres_prob=0.5,samples_to_wait=10,expected_run_length=100,to_plot=True):
+def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expected_run_length=100,to_plot=True):
 
         '''
         Wrapper function which should be called inorder to run the anomaly detection, it has four parts :
