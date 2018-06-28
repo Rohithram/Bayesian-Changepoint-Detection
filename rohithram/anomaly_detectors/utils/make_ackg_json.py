@@ -6,6 +6,20 @@ from anomaly_detectors.utils import error_codes
 
 def make_ack_json(anomaly_detectors):
     
+    '''
+    Function to make acknowledgement output json.
+    Arguments : List of anomaly detector objects which has all the info such as anomaly indexes per metric per asset
+    Returns   : dictionary of acknowledgement json
+    Logic     : The function makes o/p json for two cases i.e univariate and multivariate separately.
+                If its univariate , each anomaly detector object has only anomaly info of only one metric in an asset
+                so to make json o/p we combine all the anomaly detector objects per asset and write them together under an
+                asset. We split the total list of anomaly detectors into groups by assetno, and then loop over them.
+                Whereas for multivariate ,each anomaly detector consists info about all metrics per asset, so we just loop 
+                over the list and make o/p json
+    Note      : The function also added new feature called anom_counts under each asset json , to indicate the no of anomalies
+                detected for each metric in an asset, so this can be utilised to check for no anomaly case
+    '''
+    
     bad_response = {"code":"204","status" : "No Content","message": "Input Data is Empty"}
     no_anom_response = {"code":"200","status" : "OK","message": "No Anomalies detected"}
     

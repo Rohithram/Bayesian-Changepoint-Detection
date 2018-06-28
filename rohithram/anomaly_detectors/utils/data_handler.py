@@ -6,7 +6,7 @@ import psycopg2
 import json
 
 #importing reader and checker for reading data
-from anomaly_detectors.reader_writer import reader as reader
+from anomaly_detectors.reader_writer import reader_new as reader
 from anomaly_detectors.reader_writer import checker as checker
 import datetime as dt
 # error code is python file which contains dictionary of mapped error codes and messages for different errors

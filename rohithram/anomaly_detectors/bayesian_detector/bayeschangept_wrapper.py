@@ -46,7 +46,7 @@ algo_params_type ={
             'to_plot':bool
         }
 
-mode_options = ['detect only','detect and log','"log only']
+mode_options = ['detect only','detect and log','log only']
 
 def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expected_run_length=100,to_plot=True):
 
@@ -93,14 +93,14 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
             # res is None when no error raised, otherwise it stores the appropriate error message
             res = checker.params_checker()
             if(res!=None):
-                return res
+                return json.dumps(res)
             
             # instanstiating the reader class with reader arguments
             data_reader = Data_reader(json_data=json_data)
             #getting list of dataframes per asset if not empty
             #otherwise gives string 'Empty Dataframe'
             entire_data = data_reader.read()
-            
+#             print("\n Entire data \n {}".format(entire_data))
             writer_data = []
             anomaly_detectors = []
             if((len(entire_data)!=0 and entire_data!=None and type(entire_data)!=dict)):
@@ -136,9 +136,9 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
                 
                 out_json = {}
                 
-                if(mode==mode_options[0] or mode==mode_options[2]):
+                if(mode==mode_options[0] or mode==mode_options[1]):
                     ack_json = make_ackg_json.make_ack_json(anomaly_detectors)
-                    out_json['ack_json'] = ack_json
+                    out_json['detect_status'] = ack_json
                 if(mode==mode_options[1] or mode==mode_options[2]):
                     '''
                     Instantiates writer class to write into local database with arguments given below
@@ -149,7 +149,7 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
 
                     #called for mapping args before writing into db
                     res = writer.map_outputs_and_write()
-                    out_json['log_json']=res
+                    out_json['log_status']=res
                
                 return json.dumps(out_json)
             else:
@@ -162,5 +162,6 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
             unknown exceptions are caught here and traceback used to know the source of the error
             '''
             traceback.print_exc()
-            error_codes.error_codes['unknown']['message']=e
+            
+            error_codes.error_codes['unknown']['message']=str(e)
             return json.dumps(error_codes.error_codes['unknown'])
