@@ -120,6 +120,8 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
                         algo_kwargs['data_col_index'] = data_col
                         print("\nAnomaly detection for AssetNo : {} , Metric : {}\n ".format(assetno,
                                                                                              data_per_asset.columns[data_col]))
+                        
+                        
                         anomaly_detector = bayesian_changept_detector.Bayesian_Changept_Detector(data_per_asset,
                                                                                                  assetno=assetno,
                                                                                                  **algo_kwargs)

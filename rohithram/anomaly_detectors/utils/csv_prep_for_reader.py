@@ -7,7 +7,7 @@ import os
 
 
 reader_kwargs= lambda:{
-            'assetno':['1'],
+            'assetno':['TSFAD_A1'],
             'from_timestamp':'',
             'to_timestamp':'',
             'con':'',

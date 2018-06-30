@@ -23,8 +23,8 @@ def read(reader_kwargs):
         try:
             response_json=reader.reader_api(**reader_kwargs)
 #             print("\nResponse from reader: \n{}\n".format(response_json))
-            response_dict = json.loads(response_json)
-            return response_dict
+#             response_dict = json.loads(response_json)
+            return response_json
         except Exception as e:
             traceback.print_exc()
             return str(response_json)
@@ -34,5 +34,3 @@ def read(reader_kwargs):
 #         To read from old reader file
 #         '''
 #         response_dict=reader.reader_api(**reader_kwargs)
-
-        return response_dict
