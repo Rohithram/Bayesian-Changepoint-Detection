@@ -33,7 +33,6 @@ class Postgres_Writer():
         window_size : (int) no of points either side of around anomaly to write into db
         '''
         
-#         super(Postgres_Writer,self).__init__(anomaly_detector)
         self.anomaly_detectors = anomaly_detectors
         self.db_credentials = db_credentials
         self.sql_query_args = sql_query_args

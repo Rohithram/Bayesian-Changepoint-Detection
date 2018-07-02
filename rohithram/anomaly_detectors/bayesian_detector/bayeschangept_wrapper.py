@@ -52,17 +52,30 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
 
         '''
         Wrapper function which should be called inorder to run the anomaly detection, it has four parts :
-        *reader           - Class Data_reader defined in data_handler.py which takes in reader args and parses json 
-                            and gives dataframes
+        *reader           - Class Data_reader defined in data_handler.py which takes in json string as input and parses json 
+                            and gives list of dataframes, incase of any error it returns dictionary with error message
         *preprocessor     - preprocessors are defined in preprocessors.py, which takes in data and gives out processed 
                             data
         *anomaly detector - Class Bayesian_Changept_Detector defined in bayesian_changept_detector.py, which takes in
                             data and algorithm parameters as argument and returns anomaly indexes and data.        
+        *make_ack_json    - Function to make acknowledge json
         *writer           - Class Postgres_Writer defined in data_handler.py which takes in anomaly detector object and
                             and sql_queries , db_properties and table name as args and gives out response code.
         
         Arguments :
-        It takes reader args as of now to get the dataset and algo related arguments
+        
+        Required Parameter:
+            json_data: the Json object in the format of the input json given from reader api
+        Optional Parameter:
+            mode      : It's by default 'detect only' option, takes in mode_options which is in string format
+            thres_prob (Type : Float , between 0 and 1) It is the probability threshold after which points are considered as change points
+            Default: 0.5
+            samples_to_wait: Positive Integer representing the no of samples after which the run length probability will be calculated. It is one of the algorithm related parameter
+            Default: 10
+            expected_run_length: positive Integer that is average run length or no of samples between two change-points. This originates from modeling the interval between change-points with exponential distribution
+            Default : 100
+            to_plot : Boolean .Give True to see the plots of change-points detected and False if there is no need for plotting
+            Default : True
         Note:
         To run this, import this python file as module and call this function with required args and it will detect
         anomalies and writes to the local database.
@@ -114,7 +127,7 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
                 for i,data_per_asset in enumerate(entire_data):
                     assetno = pd.unique(data_per_asset['assetno'])[0]
                     data_per_asset[data_per_asset.columns[1:]] = normalise_standardise(data_per_asset[data_per_asset.columns[1:]])
-                    
+                    print("Overview of data : \n{}\n".format(data_per_asset.head()))
 
                     for data_col in range(1,len(data_per_asset.columns[1:])+1):
                         algo_kwargs['data_col_index'] = data_col
@@ -136,11 +149,11 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
                         
                 
                 
-                out_json = {}
+                ack_json = {}
                 
                 if(mode==mode_options[0] or mode==mode_options[1]):
                     ack_json = make_ackg_json.make_ack_json(anomaly_detectors)
-                    out_json['detect_status'] = ack_json
+
                 if(mode==mode_options[1] or mode==mode_options[2]):
                     '''
                     Instantiates writer class to write into local database with arguments given below
@@ -151,9 +164,13 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
 
                     #called for mapping args before writing into db
                     res = writer.map_outputs_and_write()
-                    out_json['log_status']=res
-               
-                return json.dumps(out_json)
+#                     out_json['log_status']=res
+                    if(res!=error_codes.error_codes['success']):
+                        return json.dumps(res)
+        
+                return json.dumps(ack_json)
+            elif(type(entire_data)==dict):
+                return json.dumps(entire_data)
             else:
                 '''
                 Data empty error
