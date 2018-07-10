@@ -138,7 +138,7 @@ def filter_csv_dataframe(df, para_list, assetno, from_timestamp, to_timestamp):
         return ('Invalid parameter_name!')
     else:
         try:
-#             df = df[df['assetno'].isin(assetno)].reset_index(drop=True)
+            df = df[df['assetno'].isin(assetno)].reset_index(drop=True)
             temp = []
             temp.append('assetno')
             temp.append('timestamp')

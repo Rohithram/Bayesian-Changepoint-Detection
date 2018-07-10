@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from anomaly_detectors.utils import error_codes
+from anomaly_detectors.utils.error_codes import error_codes
 
 def make_ack_json(anomaly_detectors):
     
@@ -30,8 +30,9 @@ def make_ack_json(anomaly_detectors):
 
     ack_json1 = ack_json()
     overall_zero_anoms = 0
+    zero_anomalies = 0
     total_anom_detectors = 0
-    
+    error_codes1= error_codes()
     if(anomaly_detectors[0].algo_type=='univariate'):
         
         no_assets = pd.unique([anomaly_detector.assetno for anomaly_detector in anomaly_detectors]).size 
@@ -43,6 +44,7 @@ def make_ack_json(anomaly_detectors):
             anom_per_asset1 = anom_per_asset()
             
             no_zero_anoms = 0
+            
             for anomaly_detector in anomaly_detectors_per_asset[i]:
 
                 data = anomaly_detector.data
@@ -62,10 +64,11 @@ def make_ack_json(anomaly_detectors):
                                                       for t in anom_timestamps] 
 
                         anom_per_asset1['anomalies'].append(anom_per_metric1)
-                        ack_json1['header'] = error_codes.error_codes['success']
+                        ack_json1['header'] = error_codes1['success']
                     else:
                         overall_zero_anoms+=1
                         no_zero_anoms+=1
+                        zero_anomalies+=1
                 else:
                     ack_json1['header'] = bad_response
                     ack_json1['body'] = []
@@ -74,7 +77,7 @@ def make_ack_json(anomaly_detectors):
                 
             if(no_zero_anoms!=len(anomaly_detectors_per_asset[i])):
                 ack_json1['body'].append(anom_per_asset1)
-            
+                                
                     
     else:
         
@@ -86,8 +89,13 @@ def make_ack_json(anomaly_detectors):
                 total_anom_detectors+=1
                 if(len(anom_indexes)==0):
                     overall_zero_anoms +=1
+            
+            if(len(data)!=0):
+                total_anom_detectors+=1
+                if(len(anom_indexes)==0):
+                    zero_anomalies +=1
                 else:
-                    ack_json1['header'] = error_codes.error_codes['success']
+                    ack_json1['header'] = error_codes1['success']
                     anom_per_asset1 = anom_per_asset()
                     anom_per_asset1['asset'] = anomaly_detector.assetno
 

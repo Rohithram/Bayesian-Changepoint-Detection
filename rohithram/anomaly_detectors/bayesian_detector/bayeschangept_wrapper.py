@@ -11,17 +11,15 @@ import datetime as dt
 import time
 import os
 
-# Importing reader and checker python files as modules
+
+# Importing reader,and other dependencies python files as modules
 from anomaly_detectors.reader_writer import db_properties as db_props
 from anomaly_detectors.reader_writer import writer_configs as write_args
 
-import psycopg2
 
 from anomaly_detectors.utils.preprocessors import *
 from anomaly_detectors.utils.data_handler import *
-# from anomaly_detectors.bayesian_detectorbayesian_changept_detector import *
-
-from anomaly_detectors.utils import error_codes as error_codes
+from anomaly_detectors.utils.error_codes import error_codes
 from anomaly_detectors.utils import type_checker as type_checker
 from anomaly_detectors.utils import csv_prep_for_reader as csv_helper
 from anomaly_detectors.utils import reader_helper
@@ -92,15 +90,17 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
             'mean_runlen':expected_run_length,
             'to_plot':to_plot
         }
-                    
-        try: 
-            '''
+              
+        '''
             #reseting the error_codes to avoid overwritting
             #error_codes is a python file imported as error_codes which has error_codes dictionary mapping 
-            #for different kinds errors and reset function to reset them.
-            '''
+        '''
+        error_codes1 = error_codes()
+        
+        try: 
             
-            error_codes.reset()
+            
+        
             # type_checker is python file which has Type_checker class which checks given parameter types
             checker = type_checker.Type_checker(kwargs=algo_kwargs,ideal_args_type=algo_params_type)
             # res is None when no error raised, otherwise it stores the appropriate error message
@@ -113,7 +113,6 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
             #getting list of dataframes per asset if not empty
             #otherwise gives string 'Empty Dataframe'
             entire_data = data_reader.read()
-#             print("\n Entire data \n {}".format(entire_data))
             writer_data = []
             anomaly_detectors = []
             if((len(entire_data)!=0 and entire_data!=None and type(entire_data)!=dict)):
@@ -164,10 +163,14 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
 
                     #called for mapping args before writing into db
                     res = writer.map_outputs_and_write()
-#                     out_json['log_status']=res
-                    if(res!=error_codes.error_codes['success']):
+                    if(res!=error_codes1['success']):
                         return json.dumps(res)
-        
+                
+                #This case for only log mode, if writer is success , it returns success msg
+                # Checking for ack_json to be empty or not
+                if(bool(ack_json)==False):
+                    ack_json['header'] = error_codes1['success']
+                    
                 return json.dumps(ack_json)
             elif(type(entire_data)==dict):
                 return json.dumps(entire_data)
@@ -175,12 +178,12 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
                 '''
                 Data empty error
                 '''
-                return json.dumps(error_codes.error_codes['data_missing'])
+                return json.dumps(error_codes1['data_missing'])
         except Exception as e:
             '''
             unknown exceptions are caught here and traceback used to know the source of the error
             '''
             traceback.print_exc()
             
-            error_codes.error_codes['unknown']['message']=str(e)
-            return json.dumps(error_codes.error_codes['unknown'])
+            error_codes1['unknown']['message']=str(e)
+            return json.dumps(error_codes1['unknown'])

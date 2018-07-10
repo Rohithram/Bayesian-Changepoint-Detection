@@ -4,13 +4,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # importing modules to run the algo
-import cProfile
-import bayesian_changepoint_detection.offline_changepoint_detection as offcd
 import bayesian_changepoint_detection.online_changepoint_detection as oncd
 from functools import partial
 import matplotlib.cm as cm
-# import numba as nb
-from numba import jit,prange,autojit
 
 class Bayesian_Changept_Detector():
     def __init__(self,data,assetno,is_train=False,data_col_index=0,pthres=0.5,mean_runlen = 100,Nw=10,to_plot=True):
@@ -55,12 +51,8 @@ class Bayesian_Changept_Detector():
         data = self.data
         print("Shape of the dataset : ")
         print(data.shape)
-#         print("Overview of first five rows of dataset : ")
-    #     print(data.head())
+
         ncol = self.data_col_index
-        
-#         ax = data[data.columns[ncol]].plot.hist(figsize=(9,7),bins=100)
-#         ax.set_title("Histogram of Dataset")
 
         R,maxes = self.findonchangepoint(data[data.columns[ncol]].values)
         anom_indexes = self.findanomindexes(R,maxes)
@@ -96,22 +88,38 @@ class Bayesian_Changept_Detector():
     
     
     def findanomindexes(self,R,maxes):
+        '''
+        Function to find the anomaly indexes (changepoint locations)
+        Arguments: 
+        R -> numpy 2D array, Run length probability matrix
+        maxes -> numpy array, Run length which has maximum probability  for each possible datapoint
+        
+        Returns:
+        anom_indexes -> anomaly indexes (list of indices)
+        '''
         Nw = self.Nw
         data = self.data
         pthres = self.pthres
+        
+        # This code logic is referred from the github, I couldn't figure out the reason for this.
+        # This is the probabilities for each datapoint to be a changepoint
         cp_probs = np.array(R[Nw,Nw:-1][1:-2])
-
+        
+        #Finds the list of locations where the left of it is less than mean probability, and right of it is more
         inversion_pts = self.findthreshold(cp_probs)
-
-        max_indexes = []
-        for i in range(len(inversion_pts)-1):
-            max_indexes.append(inversion_pts[i]+np.argmax(cp_probs[inversion_pts[i]:inversion_pts[i+1]+1]))
-
+        
+        #Finding indexes of maximum probability among window of points between two inversion points
+        # This is done to get maximum probability among a anomalous region above the mean probability
+        
+        max_indexes = [inversion_pts[i]+np.argmax(cp_probs[inversion_pts[i]:inversion_pts[i+1]+1]) 
+                       for i in range(len(inversion_pts)-1)]
+            
         cp_mapped_probs = pd.Series(cp_probs[max_indexes],index=max_indexes)
         anom_indexes = cp_mapped_probs.index[(np.where(cp_mapped_probs.values>pthres)[0])]
         
         if(self.to_plot):
             self.plotonchangepoints(anom_indexes=anom_indexes,cp_probs=cp_probs)
+            
         return anom_indexes
     
     
@@ -138,6 +146,10 @@ class Bayesian_Changept_Detector():
 
         [ax1.axvline(x=a,color='r') for a in anom_indexes]
 
+        '''
+        This is graph for Run Length probability distribution, its commented since it takes
+        Lot of time to compute the graph
+        '''
 #         sparsity = 5  # only plot every fifth data for faster display
 #         ax2.pcolor(np.array(range(0, len(R[:,0]), sparsity)), 
 #                   np.array(range(0, len(R[:,0]), sparsity)), 
