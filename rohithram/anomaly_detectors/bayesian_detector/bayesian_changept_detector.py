@@ -9,7 +9,7 @@ from functools import partial
 import matplotlib.cm as cm
 
 class Bayesian_Changept_Detector():
-    def __init__(self,data,assetno,is_train=False,data_col_index=0,pthres=0.5,mean_runlen = 100,Nw=10,to_plot=True):
+    def __init__(self,data,assetno,data_col_index=1,pthres=0.5,mean_runlen = 100,Nw=10,to_plot=True):
         
         '''
         Class which is used to find Changepoints in the dataset with given algorithm parameters.
@@ -18,8 +18,8 @@ class Bayesian_Changept_Detector():
         Arguments :
         data -> dataframe which has one or two more metric columnwise
         assetno -> assetno of the dataset
-        is_train -> By Default is False , as no training required for this algo
-        data_col_index -> column index of the metric to find changepoints on
+        data_col_index -> column index of the metric to find changepoints on (Starts from 1 since 1st column 
+                            is always assetno)
         pthres -> Default value :0.5 , (float) it is threshold after which a changepoint is flagged as on anomaly
         mean_runlen -> (int) By default 100, It is the average gap between two changepoints , this comes from 
                        nitty gritty math of exponential distributions
@@ -32,7 +32,6 @@ class Bayesian_Changept_Detector():
         self.algo_name = 'bayesian_change_point_detection'
         self.algo_code = 'bcp'
         self.algo_type = 'univariate'
-        self.istrainable = is_train
         self.data = data
         self.data_col_index = data_col_index
         self.metric_name = data.columns[data_col_index]
@@ -79,10 +78,7 @@ class Bayesian_Changept_Detector():
         Returns -> list of inversion points
         '''
         mu = np.mean(data)
-        inv_pt = []
-        for i in range(len(data)-1):
-            if((data[i+1]>mu and data[i]<=mu) or (data[i+1]<mu and data[i]>=mu)):
-                inv_pt.append(i)
+        inv_pt = [i for i in range(len(data)-1) if((data[i+1]>mu and data[i]<=mu) or (data[i+1]<mu and data[i]>=mu))]
 
         return inv_pt    
     
@@ -118,30 +114,33 @@ class Bayesian_Changept_Detector():
         anom_indexes = cp_mapped_probs.index[(np.where(cp_mapped_probs.values>pthres)[0])]
         
         if(self.to_plot):
-            self.plotonchangepoints(anom_indexes=anom_indexes,cp_probs=cp_probs)
+            self.plotonchangepoints(R=R,anom_indexes=anom_indexes,cp_probs=cp_probs)
             
         return anom_indexes
     
     
-    def plotonchangepoints(self,anom_indexes,cp_probs,nrow=None):
+    def plotonchangepoints(self,R,anom_indexes,cp_probs,nrow=None):
         '''
         plots the original data and anomaly indexes as vertical line
         and plots run length distribution and probability score for each possible run length
         '''
-        fig,(ax1,ax3) = plt.subplots(2,figsize=[18, 16])
+        fig,(ax1,ax2,ax3) = plt.subplots(3,figsize=[18, 16])
         ncol = self.data_col_index
         data = self.data
         pthres = self.pthres
         
-        ltext = 'Column : '+str(ncol+1)+' data with threshold probab = '+ str(pthres)
+        ltext = 'Threshold probability = '+ str(pthres)
 
         ax1.set_title(data.columns[ncol])
 
         if(nrow==None):
             ax1.plot(data.values[:,ncol],label=ltext)
+            
         else:
             ax1.plot(data.values[:nrow,ncol],label=ltext)
-
+        
+        ax1.set_xlabel(r"Index of Datapoints $\to$")
+        ax1.set_ylabel(r"Data $\to$")
         ax1.legend()
 
         [ax1.axvline(x=a,color='r') for a in anom_indexes]
@@ -150,17 +149,21 @@ class Bayesian_Changept_Detector():
         This is graph for Run Length probability distribution, its commented since it takes
         Lot of time to compute the graph
         '''
-#         sparsity = 5  # only plot every fifth data for faster display
-#         ax2.pcolor(np.array(range(0, len(R[:,0]), sparsity)), 
-#                   np.array(range(0, len(R[:,0]), sparsity)), 
-#                   -np.log(R[0:-1:sparsity, 0:-1:sparsity]), 
-#                   cmap=cm.Greys, vmin=0, vmax=30,label="Distribution of Run length")
-#         ax2.legend()
-
+        
+        sparsity = 5  # only plot every fifth data for faster display
+        ax2.pcolor(np.array(range(0, len(R[:,0]), sparsity)), 
+                  np.array(range(0, len(R[:,0]), sparsity)), 
+                  -np.log(R[0:-1:sparsity, 0:-1:sparsity]), 
+                  cmap=cm.Greys, vmin=0, vmax=30,label="Distribution of Run length probability over the Dataset")
+        ax2.set_xlabel(r"Index of Datapoints $\to$")
+        ax2.set_ylabel(r"Possible Run lenghts $\to$")
+        ax2.legend()
+    
         ax3.plot(cp_probs)
 
         ax3.set_title('Change points with Probability')
-
+        ax3.set_xlabel(r"Index of Datapoints $\to$")
+        ax3.set_ylabel(r"Changepoint Probability $\to$")
         plt.show()
 
         return anom_indexes

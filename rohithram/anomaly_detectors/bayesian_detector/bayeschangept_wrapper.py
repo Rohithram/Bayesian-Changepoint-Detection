@@ -99,8 +99,16 @@ def main(json_data,mode=mode_options[0],thres_prob=0.5,samples_to_wait=10,expect
         
         try: 
             
+            #converting user given mode to all lower case
+            mode = mode.lower()
+            # Check for mode
+            if(mode not in mode_options):
+                error_codes1['param']['data']['argument']='mode'
+                error_codes1['param']['data']['value']=mode
+                error_codes1['param']['message']='should be one of {}'.format((mode_options))
+                return json.dumps(error_codes1['param'])
             
-        
+            
             # type_checker is python file which has Type_checker class which checks given parameter types
             checker = type_checker.Type_checker(kwargs=algo_kwargs,ideal_args_type=algo_params_type)
             # res is None when no error raised, otherwise it stores the appropriate error message
