@@ -57,12 +57,17 @@ class Data_reader():
         #making the index of the dataframe to be index and deleting the timestamp column
         data.index = data['timestamp']
         del data['timestamp']
-
+        cols = list(data.columns)
+        del cols[cols.index('assetno')]
+        cols.insert(0,'assetno')
+        
+        data = data[cols]
         #separating the dataframe into groups of distinct assets
         data_per_assets = data.groupby('assetno')
 
         #creating list of dataframes of different assetno and with all metrics being columns in each dataframe
         for name,group in data_per_assets:
             entire_data_set.append(group)
-                 
+        
+        
         return entire_data_set
