@@ -1,7 +1,7 @@
 Time Series Anomaly Detection and Feature creation APIs
 
 
-# Self-Organizing-Maps-using-KNN
+# Online Bayesian Changepoint Detection
 High Frequency Time series Anomaly Detection using Bayesian Changepoint Detection Algorithm
 
 # Follow these steps
